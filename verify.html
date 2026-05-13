@@ -1,80 +1,224 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phone Verification | Vacch</title>
+    <title>AI Smart Hub</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 350px; text-align: center; }
-        h2 { color: #333; margin-bottom: 20px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #eee; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; transition: 0.3s; }
-        input:focus { border-color: #764ba2; }
-        button { width: 100%; padding: 12px; background-color: #6c63ff; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.3s; margin-top: 10px; }
-        button:hover { background-color: #5149d1; }
-        #recaptcha-container { margin: 15px 0; }
-        .hidden { display: none; }
-        #message { margin-top: 15px; font-size: 14px; color: #d9534f; }
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #1f1f1f;
+            --sidebar-bg: #f0f2f5;
+            --input-bg: #f1f3f4;
+            --accent-color: #4285f4;
+        }
+
+        * { box-sizing: border-box; transition: 0.4s ease; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- 1. Splash Screen --- */
+        #splash-screen {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .logo-circle {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(45deg, #4285f4, #9b72cb);
+            border-radius: 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 50px;
+            font-weight: bold;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* --- 2. Floating Customizer Button --- */
+        #custom-btn {
+            position: fixed;
+            right: 20px;
+            bottom: 100px;
+            width: 50px;
+            height: 50px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 1001;
+            font-size: 24px;
+        }
+
+        #style-panel {
+            position: fixed;
+            right: 80px;
+            bottom: 100px;
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1001;
+            color: #333;
+        }
+
+        /* --- 3. Main UI Layout --- */
+        #sidebar { width: 0; background: var(--sidebar-bg); height: 100%; overflow-x: hidden; position: fixed; left: 0; z-index: 1000; }
+        #sidebar.open { width: 260px; padding: 20px; }
+
+        #main-container { flex: 1; display: flex; flex-direction: column; width: 100%; align-items: center; }
+        
+        header { width: 100%; padding: 15px; display: flex; align-items: center; }
+        .menu-icon { font-size: 24px; cursor: pointer; padding: 10px; }
+
+        #welcome-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .grad-text {
+            font-size: 2.5rem;
+            background: linear-gradient(to right, #4285f4, #9b72cb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+        }
+
+        /* Input Area */
+        .input-box {
+            width: 90%;
+            max-width: 700px;
+            background: var(--input-bg);
+            border-radius: 30px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        input { flex: 1; background: none; border: none; font-size: 16px; outline: none; color: inherit; }
+        .icon { cursor: pointer; padding: 8px; color: #5f6368; font-size: 20px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>Phone Auth</h2>
-    
-    <div id="step1">
-        <input type="tel" id="phoneNumber" placeholder="+91 9876543210">
-        <div id="recaptcha-container"></div>
-        <button onclick="onSignInSubmit()">Send OTP</button>
+    <div id="splash-screen">
+        <div class="logo-circle">A</div>
+        <h2 style="color: #444; margin-top: 20px;">AI Smart Hub</h2>
+        <p style="color: #888;">आपका अपना AI असिस्टेंट</p>
     </div>
 
-    <div id="step2" class="hidden">
-        <input type="text" id="verificationCode" placeholder="Enter 6-digit OTP">
-        <button onclick="verifyCode()">Verify & Login</button>
+    <div id="sidebar">
+        <h3>History</h3>
+        <div id="history-content"></div>
     </div>
 
-    <p id="message"></p>
-</div>
+    <div id="custom-btn" onclick="toggleStylePanel()">🎨</div>
+    <div id="style-panel">
+        <strong>थीम सेटिंग्स</strong>
+        <button onclick="setTheme('light')">Light Mode ☀️</button>
+        <button onclick="setTheme('dark')">Dark Mode 🌙</button>
+        <hr>
+        <label>Custom BG: <input type="color" id="bgPicker" oninput="customBG(this.value)"></label>
+        <label>Text Color: <input type="color" id="textPicker" oninput="customText(this.value)"></label>
+    </div>
 
-<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <div id="main-container">
+        <header>
+            <div class="menu-icon" onclick="toggleSidebar()">☰</div>
+        </header>
 
-<script src="src/firebase.js"></script>
+        <div id="welcome-section">
+            <h1 class="grad-text" id="userTitle">नमस्ते, यूज़र</h1>
+            <p>मैं आज आपकी क्या सहायता कर सकता हूँ?</p>
+        </div>
 
-<script>
-    // reCAPTCHA setup
-    window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
-        'size': 'normal'
-    });
+        <div class="input-box">
+            <span class="icon">📷</span>
+            <span class="icon">📁</span>
+            <input type="text" placeholder="यहाँ कुछ भी लिखें...">
+            <span class="icon" style="color: #4285f4; font-weight: bold;">➤</span>
+        </div>
+    </div>
 
-    function onSignInSubmit() {
-        const number = document.getElementById('phoneNumber').value;
-        const appVerifier = window.recaptchaVerifier;
+    <script>
+        // 1. Splash Screen Logic
+        setTimeout(() => {
+            document.getElementById('splash-screen').style.display = 'none';
+        }, 3000);
 
-        firebase.auth().signInWithPhoneNumber(number, appVerifier)
-            .then((confirmationResult) => {
-                window.confirmationResult = confirmationResult;
-                document.getElementById('step1').classList.add('hidden');
-                document.getElementById('step2').classList.remove('hidden');
-                document.getElementById('message').innerText = "OTP Sent!";
-                document.getElementById('message').style.color = "green";
-            }).catch((error) => {
-                document.getElementById('message').innerText = "Error: " + error.message;
-            });
-    }
+        // 2. Sidebar Logic
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
 
-    function verifyCode() {
-        const code = document.getElementById('verificationCode').value;
-        confirmationResult.confirm(code).then((result) => {
-            const user = result.user;
-            document.getElementById('message').innerText = "Login Successful!";
-            document.getElementById('message').style.color = "green";
-            // Redirect user or show Gemini UI here
-        }).catch((error) => {
-            document.getElementById('message').innerText = "Invalid OTP. Try again.";
-        });
-    }
-</script>
+        // 3. User Name Initialization
+        window.onload = () => {
+            const name = localStorage.getItem("userName") || "नराम सिंह";
+            document.getElementById('userTitle').innerText = "नमस्ते, " + name;
+        };
 
+        // 4. Customization Logic
+        function toggleStylePanel() {
+            const panel = document.getElementById('style-panel');
+            panel.style.display = (panel.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        function setTheme(mode) {
+            if (mode === 'dark') {
+                document.documentElement.style.setProperty('--bg-color', '#131314');
+                document.documentElement.style.setProperty('--text-color', '#e3e3e3');
+                document.documentElement.style.setProperty('--input-bg', '#1e1f20');
+            } else {
+                document.documentElement.style.setProperty('--bg-color', '#ffffff');
+                document.documentElement.style.setProperty('--text-color', '#1f1f1f');
+                document.documentElement.style.setProperty('--input-bg', '#f1f3f4');
+            }
+        }
+
+        function customBG(color) {
+            document.documentElement.style.setProperty('--bg-color', color);
+        }
+
+        function customText(color) {
+            document.documentElement.style.setProperty('--text-color', color);
+        }
+    </script>
 </body>
 </html>
+

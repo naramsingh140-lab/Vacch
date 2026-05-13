@@ -1,19 +1,14 @@
 // --- 1. अपनी API KEY यहाँ डालें ---
-const API_KEY = "अपनी_API_KEY_यहाँ_लिखें"; 
+// नीचे "AIza..." वाली जगह अपनी असली चाबी पेस्ट करें
+const API_KEY = "AIzaSyDyDkGWTzZHNg0RO9WhNTrOjYmuYHtjZgI"; 
 
-// --- 2. UI Elements को कनेक्ट करना ---
-const userInput = document.querySelector('input[type="text"]');
-const sendBtn = document.querySelector('span[style*="color: #4285f4"]'); // सेंड बटन
-const welcomeSection = document.getElementById('welcome-section');
-const chatContainer = document.getElementById('main-container');
+// --- 2. HTML Elements को पहचानना ---
+const inputField = document.getElementById('user-input');
+const sendBtn = document.getElementById('send-btn');
+const messagesDiv = document.getElementById('chat-messages');
+const welcome = document.getElementById('welcome-section');
 
-// मैसेज एरिया बनाने के लिए (ताकि बातें स्क्रीन पर दिखें)
-const messagesDiv = document.createElement('div');
-messagesDiv.id = "chat-messages";
-messagesDiv.style.cssText = "flex: 1; width: 100%; max-width: 800px; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px;";
-chatContainer.insertBefore(messagesDiv, document.querySelector('.input-box'));
-
-// --- 3. Gemini AI से बात करने का फंक्शन ---
+// --- 3. Gemini AI से जवाब मांगने का फंक्शन ---
 async function callGemini(prompt) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
     
@@ -25,71 +20,89 @@ async function callGemini(prompt) {
         })
     });
 
+    if (!response.ok) {
+        throw new Error("API Response Error");
+    }
+
     const data = await response.json();
     return data.candidates[0].content.parts[0].text;
 }
 
 // --- 4. स्क्रीन पर मैसेज दिखाने का फंक्शन ---
-function displayMessage(text, sender) {
-    const msg = document.createElement('div');
-    msg.innerText = text;
-    msg.style.padding = "12px 18px";
-    msg.style.borderRadius = "20px";
-    msg.style.maxWidth = "80%;"
-    msg.style.wordWrap = "break-word";
+function addMsg(text, type) {
+    // जब पहला मैसेज आए तो वेलकम स्क्रीन हटा दें
+    if (welcome) welcome.style.display = "none";
+    if (messagesDiv) messagesDiv.style.display = "flex";
+
+    const msgBox = document.createElement('div');
+    msgBox.innerText = text;
     
-    if (sender === 'user') {
-        msg.style.alignSelf = "flex-end";
-        msg.style.backgroundColor = "#4285f4";
-        msg.style.color = "white";
+    // स्टाइलिंग (यूज़र के लिए नीला, AI के लिए ग्रे)
+    msgBox.style.padding = "10px 15px";
+    msgBox.style.borderRadius = "15px";
+    msgBox.style.maxWidth = "80%";
+    msgBox.style.margin = "5px";
+    msgBox.style.fontSize = "16px";
+    msgBox.style.lineHeight = "1.4";
+    msgBox.style.wordWrap = "break-word";
+
+    if (type === 'user') {
+        msgBox.style.alignSelf = "flex-end";
+        msgBox.style.backgroundColor = "#4285f4";
+        msgBox.style.color = "white";
     } else {
-        msg.style.alignSelf = "flex-start";
-        msg.style.backgroundColor = "var(--input-bg)";
-        msg.style.color = "var(--text-color)";
+        msgBox.style.alignSelf = "flex-start";
+        msgBox.style.backgroundColor = "var(--input-bg)";
+        msgBox.style.color = "var(--text-color)";
+        msgBox.style.border = "1px solid rgba(0,0,0,0.1)";
     }
+
+    messagesDiv.appendChild(msgBox);
     
-    messagesDiv.appendChild(msg);
+    // स्क्रीन को ऑटोमैटिक नीचे स्क्रॉल करना
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-// --- 5. सेंड बटन दबाने पर क्या होगा ---
-async function handleSend() {
-    const text = userInput.value.trim();
-    if (!text) return;
+// --- 5. चैट शुरू करने का मुख्य फंक्शन ---
+async function startChat() {
+    const userText = inputField.value.trim();
+    
+    if (!userText) return; // अगर खाली है तो कुछ न करें
 
-    // होम स्क्रीन छुपाएं और मैसेज दिखाएं
-    welcomeSection.style.display = "none";
-    displayMessage(text, 'user');
-    userInput.value = "";
+    // 1. यूज़र का मैसेज स्क्रीन पर दिखाएं
+    addMsg(userText, 'user');
+    inputField.value = ""; // इनपुट बॉक्स खाली करें
 
     try {
-        const aiResponse = await callGemini(text);
-        displayMessage(aiResponse, 'ai');
+        // 2. AI से जवाब मांगें
+        const aiReply = await callGemini(userText);
         
-        // हिस्ट्री में सेव करें
-        saveHistory(text);
+        // 3. AI का जवाब स्क्रीन पर दिखाएं
+        addMsg(aiReply, 'ai');
+        
+        // 4. हिस्ट्री में सेव करें
+        saveToHistory(userText);
+        
     } catch (error) {
-        displayMessage("माफ़ करें, कुछ गड़बड़ हो गई। अपनी API Key चेक करें।", 'ai');
+        console.error(error);
+        addMsg("माफ़ करें, मैं अभी जवाब नहीं दे पा रहा हूँ। कृपया अपनी API Key चेक करें या बाद में कोशिश करें।", 'ai');
     }
 }
 
-// सेंड बटन और Enter की पर काम करना
-sendBtn.onclick = handleSend;
-userInput.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") handleSend();
-});
+// --- 6. इवेंट लिसनर्स (बटन क्लिक और Enter की) ---
+if (sendBtn) {
+    sendBtn.onclick = startChat;
+}
 
-// --- 6. हिस्ट्री सेव करने का लॉजिक ---
-function saveHistory(text) {
+if (inputField) {
+    inputField.onkeypress = (e) => {
+        if (e.key === 'Enter') startChat();
+    };
+}
+
+// हिस्ट्री सेव करने के लिए छोटा फंक्शन
+function saveToHistory(text) {
     let history = JSON.parse(localStorage.getItem("chatHistory") || "[]");
     history.push(text);
     localStorage.setItem("chatHistory", JSON.stringify(history));
 }
-
-// --- 7. कैमरा और फाइल के लिए सिर्फ अलर्ट (अभी के लिए) ---
-document.querySelectorAll('.icon').forEach(icon => {
-    icon.onclick = function() {
-        if (this.innerText === "📷") alert("कैमरा फंक्शन चालू हो रहा है...");
-        if (this.innerText === "📁") alert("फाइल मैनेजर खुल रहा है...");
-    };
-});
